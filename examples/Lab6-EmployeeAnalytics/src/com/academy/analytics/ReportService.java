@@ -1,0 +1,105 @@
+package com.academy.analytics;
+
+import java.util.DoubleSummaryStatistics;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+public class ReportService {
+
+    private final EmployeeService employeeService;
+
+    public ReportService(EmployeeService employeeService) {
+        this.employeeService = employeeService;
+    }
+
+    public void displayDashboard() {
+        // TODO: stream stats (avg/max/min), department count, active/inactive
+        // TODO: top performer, highest-paid dept, top 5 salaries — print dashboard block
+        List<Employee> employees = employeeService.getEmployees();
+        DoubleSummaryStatistics stats = employees.stream()
+                .collect(Collectors.summarizingDouble(Employee::getSalary));
+
+        long departmentCount = employees.stream()
+                .map(Employee::getDepartment).distinct().count();
+        long activeCount = employees.stream().filter(Employee::isActive).count();
+        long inactiveCount = employees.size() - activeCount;
+
+        Optional<Employee> topPerformer = employeeService.findTopPerformer();
+        Optional<String> highestPaidDepartment =
+                employeeService.findDepartmentWithHighestAverageSalary();
+        List<Employee> topSalaries = employeeService.getTopSalaries(5);
+
+        System.out.println("=============================");
+        System.out.println("Employee Analytics Dashboard");
+        System.out.println("=============================");
+        System.out.println("Employees : " + employees.size());
+        System.out.printf("Average Salary : %.0f%n", stats.getAverage());
+        System.out.printf("Highest Salary : %.0f%n", stats.getMax());
+        System.out.printf("Lowest Salary : %.0f%n", stats.getMin());
+        System.out.println("Departments : " + departmentCount);
+
+        topPerformer.ifPresent(e ->
+                System.out.println("Top Performer : " + e.getName()
+                        + " (Rating " + e.getRating() + ")"));
+        highestPaidDepartment.ifPresent(d ->
+                System.out.println("Highest Paid Department : " + d));
+
+        System.out.println("Top 5 Highest Salaries");
+        for (int i = 0; i < topSalaries.size(); i++) {
+            Employee e = topSalaries.get(i);
+            System.out.printf("%d %s - %.0f%n", i + 1, e.getName(), e.getSalary());
+        }
+
+        System.out.println("Active Employees : " + activeCount);
+        System.out.println("Inactive Employees : " + inactiveCount);
+//        throw new UnsupportedOperationException("TODO");
+    }
+
+    public void displayEmployeesByDepartment() {
+        employeeService.displayGroupedEmployees();
+    }
+
+    public void displaySalaryReport() {
+        employeeService.displayReductions();
+        System.out.println();
+        employeeService.displaySummaryStatistics();
+        System.out.println();
+        employeeService.displayPartitionedEmployees();
+    }
+
+    public void displayTopPerformers() {
+        System.out.println("Top Performers (Rating >= 4):");
+        // TODO: employeeService.getTopPerformers(4).forEach(...)
+//        throw new UnsupportedOperationException("TODO");
+    }
+
+    public void displayHighestSalary() {
+        employeeService.displayHighestPaidEmployeeOptional();
+    }
+
+    public void displayDepartmentStatistics() {
+        // TODO: getDepartmentStatistics(); print count/avg/max/min per dept
+        System.out.println("Top Performers (Rating >= 4):");
+        employeeService.getTopPerformers(4).forEach(System.out::println);
+//        throw new UnsupportedOperationException("TODO");
+    }
+
+    public void displayActiveEmployees() {
+        employeeService.displayActiveEmployees();
+    }
+
+    public void displayBonusInsights() {
+        System.out.println("--- Bonus Insights ---");
+        // TODO: second highest salary, longest name, highest avg dept, histogram, custom collector
+        Map<String, DoubleSummaryStatistics> stats = employeeService.getDepartmentStatistics();
+        stats.forEach((department, departmentStats) -> {
+            System.out.println(department);
+            System.out.printf("  Count   : %d%n", departmentStats.getCount());
+            System.out.printf("  Average : %.0f%n", departmentStats.getAverage());
+            System.out.printf("  Max     : %.0f%n", departmentStats.getMax());
+            System.out.printf("  Min     : %.0f%n", departmentStats.getMin());
+        });
+    }
+}
